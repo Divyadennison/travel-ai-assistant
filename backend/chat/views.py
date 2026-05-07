@@ -1,10 +1,5 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from openai import OpenAI
-import os
-
-# 🔐 OpenAI Client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # 👤 Store user conversation state
 user_state = {}
@@ -18,55 +13,29 @@ def reset_user(user_id):
     }
 
 
-# 🔥 AI + FALLBACK ITINERARY
+# 🔥 FALLBACK ITINERARY GENERATOR
 def generate_itinerary(destination, days):
 
-    prompt = f"""
-    Create a {days}-day travel itinerary for {destination}.
+    activities = [
+        f"Explore top attractions in {destination}",
+        "Enjoy local food and sightseeing",
+        "Visit cultural landmarks and temples",
+        "Try adventure activities / water sports",
+        "Relax at scenic spots and beaches",
+        "Explore local markets and shopping",
+        "Visit nearby hidden gems",
+        "Enjoy nightlife and local experiences",
+        "Leisure day and photography",
+        "Wrap-up and return journey"
+    ]
 
-    Keep it simple and structured like:
+    plan = ""
 
-    Day 1:
-    Day 2:
-    Day 3:
-    """
+    for i in range(1, days + 1):
+        activity = activities[i - 1]
+        plan += f"Day {i}: {activity}\n"
 
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-        )
-
-        return response.choices[0].message.content
-
-    except Exception as e:
-
-        print("❌ OPENAI ERROR:", str(e))
-
-        # 🔥 SMART FALLBACK (WORKS WITHOUT API MONEY)
-
-        activities = [
-            f"Explore top attractions in {destination}",
-            "Enjoy local food and sightseeing",
-            "Visit cultural landmarks and temples",
-            "Try adventure activities / water sports",
-            "Relax at scenic spots and beaches",
-            "Explore local markets and shopping",
-            "Visit nearby hidden gems",
-            "Enjoy nightlife and local experiences",
-            "Leisure day and photography",
-            "Wrap-up and return journey"
-        ]
-
-        plan = ""
-
-        for i in range(1, days + 1):
-            activity = activities[i - 1]
-            plan += f"Day {i}: {activity}\n"
-
-        return plan
+    return plan
 
 
 # =========================================================
@@ -209,7 +178,6 @@ def chat_api(request):
 
         state["step"] = "booking_confirm"
 
-        # 🔥 AI / FALLBACK
         itinerary = generate_itinerary(
             state["destination"],
             days
